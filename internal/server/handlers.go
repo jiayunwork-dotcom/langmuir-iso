@@ -58,6 +58,7 @@ func handleIso(w http.ResponseWriter, r *http.Request) {
 		Q:     round6(pt.Q),
 		PHalf: round6(m.HalfPressure()),
 	}
+	resp = lookupIsoMemo(resp)
 	writeJSON(w, http.StatusOK, resp)
 }
 
