@@ -1,0 +1,11 @@
+{
+  "name": "N2 monolayer adsorption on microporous carbon at 77 K",
+  "adsorbate": "N2",
+  "temperature_k": 77.0,
+  "k": 0.115,
+  "qmax": 9.6,
+  "mode": "pressure",
+  "unit": "bar",
+  "pressures": [0.0, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0],
+  "reference": [0.0, 0.02248, 0.05437, 0.10314, 0.18699, 0.36508, 0.53488, 0.69697, 0.85185, 0.92]
+}

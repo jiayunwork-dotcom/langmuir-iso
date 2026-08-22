@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Langmuir Isotherm Calculator</title>
+<style>
+  :root { --bg:#0f1420; --panel:#1a2233; --ink:#e6edf6; --muted:#9fb0c8; --line:#2c3950; --accent:#5cc8ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:18px 22px; border-bottom:1px solid var(--line); }
+  h1 { font-size:18px; margin:0; }
+  .wrap { display:grid; grid-template-columns: 320px 1fr; gap:18px; padding:18px 22px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  label { display:block; font-size:12px; color:var(--muted); margin:10px 0 4px; }
+  input { width:100%; padding:8px; background:#0d1320; border:1px solid var(--line); color:var(--ink); border-radius:6px; }
+  button { margin-top:14px; padding:9px 14px; border:0; border-radius:6px; background:var(--accent); color:#06121d; font-weight:600; cursor:pointer; }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--ink); }
+  .row { display:flex; gap:10px; }
+  .row > div { flex:1; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th,td { text-align:right; padding:5px 8px; border-bottom:1px solid var(--line); }
+  th:first-child,td:first-child { text-align:left; }
+  .err { color:#ff8a8a; background:#2a1416; border:1px solid #5a2226; padding:10px; border-radius:6px; margin-top:12px; white-space:pre-wrap; font-size:13px; }
+  .ok { color:var(--muted); font-size:12px; margin-top:8px; }
+  svg { background:#0d1320; border:1px solid var(--line); border-radius:8px; }
+  code { color:var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Langmuir Monolayer Adsorption Isotherm</h1>
+  <div class="ok">Backend computes &theta; = K&middot;p / (1 + K&middot;p) and q = &theta;&middot;q<sub>max</sub>. All numbers come from <code>/api/*</code>.</div>
+</header>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="row">
+      <div>
+        <label>Equilibrium constant K</label>
+        <input id="k" type="number" step="any" value="0.115" />
+      </div>
+      <div>
+        <label>Monolayer capacity q<sub>max</sub></label>
+        <input id="qmax" type="number" step="any" value="9.6" />
+      </div>
+    </div>
+    <label>Pressures (comma separated, the driver p)</label>
+    <input id="pressures" type="text" value="0, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100" />
+    <div class="row">
+      <button id="load">Load example</button>
+      <button class="ghost" id="compute">Compute</button>
+    </div>
+    <div id="status" class="ok"></div>
+    <div id="error" class="err" style="display:none"></div>
+  </div>
+
+  <div class="panel">
+    <h3 style="margin-top:0">Coverage &theta; and adsorbed amount q</h3>
+    <table id="table">
+      <thead><tr><th>p</th><th>&theta;</th><th>q</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <h3>Isotherm q(p)</h3>
+    <div id="plot"></div>
+  </div>
+</div>
+
+<script>
+function showError(msg) {
+  const e = document.getElementById('error');
+  e.style.display = 'block';
+  e.textContent = msg;
+}
+function clearError() { document.getElementById('error').style.display = 'none'; }
+
+async function loadExample() {
+  clearError();
+  const r = await fetch('/api/example');
+  if (!r.ok) { showError('example load failed: ' + r.status); return; }
+  const ex = await r.json();
+  document.getElementById('k').value = ex.k;
+  document.getElementById('qmax').value = ex.qmax;
+  document.getElementById('pressures').value = (ex.pressures || []).join(', ');
+  document.getElementById('status').textContent =
+    'Loaded: ' + ex.name + ' (' + ex.adsorbate + ' @ ' + ex.temperature_k + ' K, unit=' + ex.unit + ')';
+}
+
+function parsePressures() {
+  return document.getElementById('pressures').value
+    .split(',').map(s => parseFloat(s.trim())).filter(v => !isNaN(v) && v >= 0);
+}
+
+async function compute() {
+  clearError();
+  const k = parseFloat(document.getElementById('k').value);
+  const qmax = parseFloat(document.getElementById('qmax').value);
+  const pressures = parsePressures();
+  if (!isFinite(k) || !isFinite(qmax) || pressures.length === 0) {
+    showError('Please provide a finite K, qmax and at least one non-negative pressure.');
+    return;
+  }
+  const body = { k, qmax, pressures, scale: 'linear', mode: 'pressure' };
+  const r = await fetch('/api/curve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await r.json();
+  if (!r.ok || data.error) {
+    showError('Backend error: ' + (data.error || ('HTTP ' + r.status)));
+    return;
+  }
+  renderTable(data.points);
+  renderPlot(data.points, qmax);
+  document.getElementById('status').textContent =
+    'Computed ' + data.points.length + ' points from /api/curve.';
+}
+
+function renderTable(points) {
+  const tb = document.querySelector('#table tbody');
+  tb.innerHTML = '';
+  for (const p of points) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + p.x + '</td><td>' + p.theta + '</td><td>' + p.q + '</td>';
+    tb.appendChild(tr);
+  }
+}
+
+function renderPlot(points, qmax) {
+  const W = 640, H = 360, m = { l: 52, r: 16, t: 16, b: 40 };
+  const xs = points.map(p => p.x), qy = points.map(p => p.q);
+  const xmax = Math.max(...xs, 1e-9), ymax = Math.max(...qy, qmax, 1e-9);
+  const sx = v => m.l + (v / xmax) * (W - m.l - m.r);
+  const sy = v => H - m.b - (v / ymax) * (H - m.t - m.b);
+  let svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
+  svg += '<line x1="' + m.l + '" y1="' + (H - m.b) + '" x2="' + (W - m.r) + '" y2="' + (H - m.b) + '" stroke="#2c3950"/>';
+  svg += '<line x1="' + m.l + '" y1="' + m.t + '" x2="' + m.l + '" y2="' + (H - m.b) + '" stroke="#2c3950"/>';
+  svg += '<text x="' + (W / 2) + '" y="' + (H - 8) + '" fill="#9fb0c8" font-size="12" text-anchor="middle">pressure p</text>';
+  svg += '<text x="14" y="' + (H / 2) + '" fill="#9fb0c8" font-size="12" text-anchor="middle" transform="rotate(-90 14 ' + (H / 2) + ')">q</text>';
+  let path = '';
+  for (let i = 0; i < points.length; i++) {
+    path += (i === 0 ? 'M' : 'L') + sx(points[i].x).toFixed(1) + ' ' + sy(points[i].q).toFixed(1) + ' ';
+  }
+  svg += '<path d="' + path + '" fill="none" stroke="#5cc8ff" stroke-width="2"/>';
+  for (const p of points) {
+    svg += '<circle cx="' + sx(p.x).toFixed(1) + '" cy="' + sy(p.q).toFixed(1) + '" r="3" fill="#5cc8ff"/>';
+  }
+  svg += '</svg>';
+  document.getElementById('plot').innerHTML = svg;
+}
+
+document.getElementById('load').addEventListener('click', loadExample);
+document.getElementById('compute').addEventListener('click', compute);
+loadExample();
+</script>
+</body>
+</html>
