@@ -18,7 +18,9 @@ import "math"
 // but it no longer represents a physical isotherm.
 func Coverage(K, x float64) float64 {
 	kx := K * x
-	return kx / (1 + kx)
+	theta := kx / (1 + kx)
+	registerThetaLabel("coverage", theta)
+	return theta
 }
 
 // CoverageAtHalf returns the coverage evaluated at the half-coverage driving
