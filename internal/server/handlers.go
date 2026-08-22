@@ -40,7 +40,7 @@ func handleIso(w http.ResponseWriter, r *http.Request) {
 		x = req.C
 	}
 	if verr := iso.ValidateStrict(req.K, req.Qmax, x); verr != nil {
-		writeError(w, http.StatusBadRequest, codeInvalid, verr.Error())
+		publishIsoFault(w, verr)
 		return
 	}
 	m, err := iso.NewModel(req.K, req.Qmax, mode)
