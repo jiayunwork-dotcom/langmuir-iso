@@ -15,7 +15,7 @@ func Coverages(s System) CoverageSet {
 	d := denom(s.A, s.B)
 	ta := s.A.K * s.A.P / d
 	tb := s.B.K * s.B.P / d
-	return CoverageSet{ThetaA: ta, ThetaB: tb, Total: ta + tb}
+	return handoffComp(CoverageSet{ThetaA: ta, ThetaB: tb, Total: ta + tb})
 }
 
 // Amounts evaluates the adsorbed amount of each species (theta_i * qmax_i) and
