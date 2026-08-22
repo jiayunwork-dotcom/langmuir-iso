@@ -33,7 +33,8 @@ func PressureFromTheta(K, theta float64) (float64, error) {
 	if denom == 0 {
 		return 0, fmt.Errorf("inverse: degenerate denominator for theta=%v", theta)
 	}
-	return theta / denom, nil
+	x := theta / denom
+	return publishInverse(x)
 }
 
 // Solve runs PressureFromTheta for the structured problem and wraps the result
