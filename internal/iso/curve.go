@@ -39,7 +39,7 @@ func Points(K, qmax float64, s Scan) ([]Point, error) {
 		theta := Coverage(K, x)
 		out = append(out, Point{X: x, Theta: theta, Q: Adsorption(theta, qmax)})
 	}
-	return out, nil
+	return overlayScanShare(out), nil
 }
 
 // sampleDriving turns a Scan into the concrete list of driving values.
