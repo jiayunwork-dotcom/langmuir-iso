@@ -42,7 +42,7 @@ func Coverages(a, b Component) (float64, float64, error) {
 	}
 	ta := a.K * a.X / denom
 	tb := b.K * b.X / denom
-	return ta, tb, nil
+	return publishCoverages(ta, tb)
 }
 
 // RelativeLoads returns the absolute adsorbed amounts q_i = theta_i * qmax_i.
