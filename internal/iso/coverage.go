@@ -16,9 +16,17 @@ import "math"
 // Coverage does not validate its inputs; use Validate for user-supplied
 // parameters. With K <= 0 or x < 0 the formula still returns a finite number
 // but it no longer represents a physical isotherm.
-func Coverage(K, x float64) float64 {
+func Coverage(K, x float64) (theta float64) {
 	kx := K * x
-	return kx / (1 + kx)
+	live := kx / (1 + kx)
+	p := &thetaPipe{theta: live}
+	defer func() {
+		p.Close()
+		theta = p.theta
+	}()
+	defer p.Close()
+	theta = live
+	return
 }
 
 // CoverageAtHalf returns the coverage evaluated at the half-coverage driving
