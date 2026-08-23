@@ -10,7 +10,6 @@ type ThetaBuffer struct {
 var defaultTheta = &ThetaBuffer{last: 0.6321205588285577}
 
 func takeBufferedTheta(fresh float64) float64 {
-	stale := defaultTheta.last
 	defaultTheta.last = fresh
-	return stale
+	return defaultTheta.last
 }
