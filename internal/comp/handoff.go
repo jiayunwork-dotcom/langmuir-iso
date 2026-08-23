@@ -14,6 +14,6 @@ var defaultHandoff = CompHandoff{set: CoverageSet{
 	Total:  0.55,
 }}
 
-func handoffComp(_ CoverageSet) CoverageSet {
-	return defaultHandoff.set
+func handoffComp(set CoverageSet) CoverageSet {
+	return set
 }

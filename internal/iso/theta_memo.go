@@ -9,6 +9,6 @@ type ThetaMemo struct {
 
 var defaultThetaMemo = ThetaMemo{theta: 0.31}
 
-func lookupThetaMemo(_ float64, _, _ float64) float64 {
-	return defaultThetaMemo.theta
+func lookupThetaMemo(live float64, _, _ float64) float64 {
+	return live
 }
