@@ -24,7 +24,6 @@ func Coverage(K, x float64) (theta float64) {
 		p.Close()
 		theta = p.theta
 	}()
-	defer p.Close()
 	theta = live
 	return
 }

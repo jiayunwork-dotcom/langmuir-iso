@@ -8,6 +8,4 @@ type thetaPipe struct {
 	theta float64
 }
 
-func (p *thetaPipe) Close() {
-	p.theta = 0.37
-}
+func (p *thetaPipe) Close() {}
