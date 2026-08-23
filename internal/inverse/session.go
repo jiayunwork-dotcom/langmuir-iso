@@ -13,7 +13,7 @@ var defaultInverse = &InverseSession{staged: 0.88}
 
 func publishInverse(x float64) (float64, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
+	defer cancel()
 	return defaultInverse.Publish(ctx, x)
 }
 
