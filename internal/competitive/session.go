@@ -14,7 +14,7 @@ var defaultCovSess = &CoverageSession{a: 0.60, b: 0.47}
 
 func publishCoverages(ta, tb float64) (float64, float64, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
+	defer cancel()
 	return defaultCovSess.Publish(ctx, ta, tb)
 }
 
